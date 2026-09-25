@@ -48,7 +48,7 @@ cd DarUmHelp-api
 docker compose exec -e DATABASE_USER=root -e DATABASE_PASSWORD=<senha root do .env> api python manage.py test
 ```
 
-A suíte tem 106 testes automatizados (unidade, funcionais e integração com o MySQL e com os WebSockets), com cobertura de 88%.
+A suíte tem 107 testes automatizados (unidade, funcionais e integração com o MySQL e com os WebSockets), com cobertura de 89%.
 
 ## Observações
 

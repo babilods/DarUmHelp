@@ -1,5 +1,8 @@
+import datetime
+
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -303,24 +306,33 @@ def minha_carteira(request):
         .select_related("aluno__user", "pagamento")
         .order_by("-data", "-horario")
     )
-    extrato = [
-        {
-            "tipo": "recebimento",
-            "descricao": f"Aula com {a.aluno.user.get_full_name() or a.aluno.user.username}",
-            "valor": float(a.pagamento.valor) if hasattr(a, "pagamento") else 0.0,
-            "data": a.data.strftime("%d/%m/%Y"),
-        }
+    # Cada item guarda a data de verdade para ordenar (a data formatada "dd/mm/aaaa"
+    # ordenada como texto misturava meses: "30/08" vinha depois de "02/09").
+    movimentos = [
+        (
+            datetime.datetime.combine(a.data, a.horario),
+            {
+                "tipo": "recebimento",
+                "descricao": f"Aula com {a.aluno.user.get_full_name() or a.aluno.user.username}",
+                "valor": float(a.pagamento.valor) if hasattr(a, "pagamento") else 0.0,
+                "data": a.data.strftime("%d/%m/%Y"),
+            },
+        )
         for a in aulas_concluidas
     ] + [
-        {
-            "tipo": "saque",
-            "descricao": f"Saque via PIX ({s.chave_pix_usada})",
-            "valor": float(s.valor),
-            "data": s.criado_em.strftime("%d/%m/%Y"),
-        }
+        (
+            timezone.localtime(s.criado_em).replace(tzinfo=None),
+            {
+                "tipo": "saque",
+                "descricao": f"Saque via PIX ({s.chave_pix_usada})",
+                "valor": float(s.valor),
+                "data": timezone.localtime(s.criado_em).strftime("%d/%m/%Y"),
+            },
+        )
         for s in professor.saques.all()
     ]
-    extrato.sort(key=lambda item: item["data"], reverse=True)
+    movimentos.sort(key=lambda m: m[0], reverse=True)
+    extrato = [item for _, item in movimentos]
 
     return Response(
         {

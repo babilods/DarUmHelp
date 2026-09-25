@@ -318,6 +318,25 @@ class CarteiraSaqueTests(TestCase):
         Saque.objects.create(professor=self.professor, valor=Decimal("40.00"), chave_pix_usada="x")
         self.assertEqual(saldo_disponivel(self.professor), Decimal("110.00"))
 
+    def test_carteira_mostra_total_recebido_saldo_e_extrato_em_ordem(self):
+        # Aula concluída em agosto (R$ 30) — as de ontem (R$ 100 + R$ 50) vêm do setUp.
+        disciplina = Disciplina.objects.get(professor=self.professor)
+        janela = Disponibilidade.objects.get(professor=self.professor)
+        antiga = Agendamento.objects.create(
+            aluno=criar_aluno("antigo@teste.com"), professor=self.professor, disciplina=disciplina,
+            disponibilidade=janela, data=datetime.date(2026, 8, 30), horario=datetime.time(9), status="concluido",
+        )
+        Pagamento.objects.create(agendamento=antiga, valor=Decimal("30.00"), metodo="PIX", status="aprovado")
+        self.client.post("/api/professores/me/saques/", {"valor": "100.00"}, format="json")
+
+        c = self.client.get("/api/professores/me/carteira/").data
+        self.assertEqual(c["totalGanho"], 180.0)       # 100 + 50 + 30 (a aula só confirmada não conta)
+        self.assertEqual(c["totalSacado"], 100.0)
+        self.assertEqual(c["saldoDisponivel"], 80.0)   # 180 - 100
+        # Mais recente primeiro: o saque de hoje, as aulas de ontem e, por último, a de 30/08.
+        self.assertEqual(c["extrato"][0]["tipo"], "saque")
+        self.assertEqual(c["extrato"][-1]["data"], "30/08/2026")
+
     def test_saque_valido_e_registrado(self):
         resp = self.client.post("/api/professores/me/saques/", {"valor": "100.00"}, format="json")
         self.assertEqual(resp.status_code, 201)

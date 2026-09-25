@@ -3352,7 +3352,7 @@ Tem certeza que deseja cancelar esta aula?`;
                             ${c.extrato.map(item => `
                                 <div class="flex items-center justify-between text-xs bg-slate-50 rounded-lg px-3 py-2">
                                     <div>
-                                        <p class="font-semibold text-slate-700">${item.descricao}</p>
+                                        <p class="font-semibold text-slate-700">${escapeHtml(item.descricao)}</p>
                                         <p class="text-[10px] text-slate-400">${item.data}</p>
                                     </div>
                                     <span class="font-bold ${item.tipo === 'saque' ? 'text-red-500' : 'text-emerald-600'}">${item.tipo === 'saque' ? '-' : '+'} R$ ${item.valor.toFixed(2).replace('.', ',')}</span>
