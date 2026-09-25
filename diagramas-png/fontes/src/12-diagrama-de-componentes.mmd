@@ -1,0 +1,86 @@
+flowchart LR
+classDef comp fill:#EEF0FF,stroke:#4F46E5,stroke-width:1.5px,color:#111
+classDef ext fill:#F4F4F5,stroke:#71717A,stroke-width:1.5px,stroke-dasharray:5 3,color:#111
+classDef db fill:#ECFDF5,stroke:#059669,stroke-width:1.5px,color:#111
+
+subgraph WEB["«pacote» DarUmHelp-web (navegador)"]
+  direction TB
+  UI["«componente»<br/><b>Interface (index.html)</b><br/>telas, modais, toasts"]:::comp
+  JS["«componente»<br/><b>script.js</b><br/>estado da sessão, renderização,<br/>aviso de mensagens novas"]:::comp
+  APIC["«componente»<br/><b>Cliente REST</b><br/>apiFetch() + CSRF"]:::comp
+  WSC["«componente»<br/><b>Cliente WebSocket</b><br/>chat e sinalização"]:::comp
+  RTC["«componente»<br/><b>Cliente WebRTC</b><br/>RTCPeerConnection, câmera/mic"]:::comp
+  UI --> JS
+  JS --> APIC
+  JS --> WSC
+  JS --> RTC
+  RTC --> WSC
+end
+
+subgraph SRV["«pacote» DarUmHelp-api (Django 5 + Daphne ASGI)"]
+  direction TB
+  subgraph CORE["«pacote» darumhelp (projeto)"]
+    direction TB
+    URLS["«componente»<br/><b>urls.py / asgi.py</b><br/>roteamento HTTP e WebSocket"]:::comp
+    FRONT["«componente»<br/><b>front.py</b><br/>serve os arquivos do front"]:::comp
+    SET["«componente»<br/><b>settings.py</b><br/>backends plugáveis"]:::comp
+  end
+  subgraph CONTAS["«pacote» contas"]
+    direction TB
+    CV["«componente»<br/><b>Autenticação e perfis</b><br/>registro, login, troca de e-mail,<br/>perfil do aluno, favoritos, cartões salvos"]:::comp
+    CADM["«componente»<br/><b>admin.py</b><br/>aprovar / rejeitar professor"]:::comp
+  end
+  subgraph PROF["«pacote» professores"]
+    direction TB
+    PV["«componente»<br/><b>Catálogo e perfil profissional</b><br/>busca, disciplinas, disponibilidade,<br/>uploads (currículo, vídeo, documento)"]:::comp
+    VER["«componente»<br/><b>verificacao.py</b><br/>VerificadorHeuristico (pypdf)"]:::comp
+    CART["«componente»<br/><b>carteira.py</b><br/>saldo, saques, estatísticas"]:::comp
+  end
+  subgraph AG["«pacote» agendamento"]
+    direction TB
+    AV["«componente»<br/><b>Aulas</b><br/>agendar, cancelar, concluir,<br/>no-show, avaliar, mensagens,<br/>não lidas, denúncias"]:::comp
+    SVC["«componente»<br/><b>services.py</b><br/>horários, permissões"]:::comp
+    MOD["«componente»<br/><b>moderacao.py</b><br/>ModeradorPalavrasChave"]:::comp
+    SIG["«componente»<br/><b>signals.py</b><br/>push do chat, média de avaliações"]:::comp
+  end
+  subgraph RT["«pacote» realtime"]
+    direction TB
+    CHAT["«componente»<br/><b>ChatConsumer</b>"]:::comp
+    SINAL["«componente»<br/><b>SinalizacaoConsumer</b>"]:::comp
+    LAYER["«componente»<br/><b>Channel Layer</b><br/>InMemoryChannelLayer"]:::comp
+  end
+  ORM["«componente»<br/><b>Django ORM + DRF</b>"]:::comp
+end
+
+MYSQL[("«banco de dados»<br/><b>MySQL 8.0</b>")]:::db
+MEDIA[("«armazenamento»<br/><b>media/</b><br/>avatares, currículos, vídeos, documentos")]:::db
+STUN["«serviço externo»<br/><b>Servidor STUN</b><br/>stun.l.google.com"]:::ext
+CDN["«serviço externo»<br/><b>CDN jsDelivr</b><br/>ícones Lucide"]:::ext
+
+APIC -- "HTTP/JSON" --> URLS
+WSC -- "WebSocket" --> URLS
+UI -. "GET /" .-> FRONT
+UI -. "script" .-> CDN
+RTC -. "ICE / NAT" .-> STUN
+URLS --> CV
+URLS --> PV
+URLS --> AV
+URLS --> CHAT
+URLS --> SINAL
+PV --> VER
+PV --> CART
+AV --> SVC
+AV --> MOD
+AV --> SIG
+SIG --> LAYER
+CHAT --> LAYER
+SINAL --> LAYER
+CHAT --> SVC
+CV --> ORM
+PV --> ORM
+AV --> ORM
+CART --> ORM
+CADM --> ORM
+ORM -- "SQL (mysqlclient)" --> MYSQL
+PV -- "FileSystemStorage" --> MEDIA
+CV -- "FileSystemStorage" --> MEDIA

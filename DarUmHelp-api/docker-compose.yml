@@ -1,0 +1,40 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DATABASE_NAME:-darumhelp}
+      MYSQL_USER: ${DATABASE_USER:-darumhelp}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD:-darumhelp}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD:-darumhelp_root}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DATABASE_ROOT_PASSWORD:-darumhelp_root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    # Em dev usamos runserver (hot-reload lendo o bind mount abaixo). Para produção,
+    # remova este "command" e deixe o CMD do Dockerfile (gunicorn) assumir.
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_HOST: db
+    volumes:
+      - /mnt/c/faculdade01/DarUmHelp/DarUmHelp-api:/app
+      - /mnt/c/faculdade01/DarUmHelp/DarUmHelp-web:/DarUmHelp-web:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:

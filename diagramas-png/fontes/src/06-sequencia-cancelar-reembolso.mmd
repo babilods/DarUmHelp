@@ -1,0 +1,34 @@
+sequenceDiagram
+autonumber
+actor U as Aluno ou Professor
+participant F as Frontend
+participant API as API Django REST
+participant DB as Banco de Dados
+U->>F: Clica em "Cancelar aula" e confirma
+F->>API: POST /api/aulas/{id}/cancelar/
+API->>DB: BEGIN · SELECT Agendamento + Pagamento FOR UPDATE
+DB-->>API: aula
+alt usuário não é o aluno nem o professor da aula
+  API-->>F: 403 Forbidden
+else aula já cancelada ou concluída
+  API-->>F: 400 Bad Request
+else aula já começou ou terminou
+  API-->>F: 400 (use "concluir" ou "não compareceu")
+else aula ainda não começou
+  alt cancelado pelo professor
+    API->>API: percentual = 100%
+  else cancelado pelo aluno
+    API->>API: horasRestantes() = início da aula − agora
+    alt faltam 24h ou mais
+      API->>API: percentual = 100%
+    else faltam menos de 24h
+      API->>API: percentual = 0%
+    end
+  end
+  API->>DB: UPDATE Agendamento (status=cancelado, motivo, cancelado_por, cancelado_em)
+  API->>DB: UPDATE Pagamento (percentual, valor_reembolsado,<br/>status_reembolso=solicitado)
+  API->>DB: COMMIT
+  API-->>F: 200 OK (mensagem, aula)
+  F-->>U: Exibe resultado do reembolso
+end
+Note over API,DB: A janela de Disponibilidade não é alterada — o horário<br/>volta a ficar livre porque só aulas ativas contam como conflito.

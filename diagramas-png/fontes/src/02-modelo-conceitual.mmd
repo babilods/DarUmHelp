@@ -1,0 +1,33 @@
+flowchart TB
+U["<b>Usuário</b><br/>nome, e-mail, senha"]
+P["<b>Professor</b><br/>biografia, preço/hora, foto, vídeo de apresentação,<br/>metodologia, telefone, currículo, documento,<br/>chave PIX, status de verificação, média de avaliações"]
+A["<b>Aluno</b><br/>sobre, foto, telefone, nível acadêmico,<br/>objetivo, matérias de interesse"]
+D["<b>Disciplina</b><br/>nome, descrição"]
+DI["<b>Disponibilidade</b> (janela semanal)<br/>dia da semana, horário início, horário fim, status"]
+AG["<b>Aula (Agendamento)</b><br/>data, horário, duração, conteúdo, status, motivo de cancelamento"]
+PG["<b>Pagamento</b><br/>valor, método, status, % reembolso"]
+AV["<b>Avaliação</b><br/>nota, comentário"]
+M["<b>Mensagem</b><br/>texto, data-hora"]
+DE["<b>Denúncia</b><br/>motivo, detalhes, status"]
+S["<b>Saque</b><br/>valor, chave PIX, data"]
+F["<b>Favorito</b><br/>data"]
+C["<b>Cartão salvo</b><br/>bandeira, últimos 4 dígitos, validade"]
+
+U -- "1..1 se especializa em 0..1" --> P
+U -- "1..1 se especializa em 0..1" --> A
+P -- "1..1 leciona 0..N" --> D
+P -- "1..1 oferece 0..N" --> DI
+D -- "1..1 associada a 0..N" --> DI
+P -- "1..1 solicita 0..N" --> S
+A -- "1..1 favorita 0..N" --> F
+F -- "0..N referencia 1..1" --> P
+A -- "1..1 guarda 0..N" --> C
+A -- "1..1 agenda 0..N" --> AG
+P -- "1..1 ministra 0..N" --> AG
+D -- "1..1 referente a 0..N" --> AG
+DI -- "1..1 comporta 0..N" --> AG
+AG -- "1..1 gera 0..1" --> PG
+AG -- "1..1 recebe 0..1" --> AV
+AG -- "1..1 contém 0..N" --> M
+AG -- "1..1 origina 0..N" --> DE
+M -- "0..1 é alvo de 0..N" --> DE

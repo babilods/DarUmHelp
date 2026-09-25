@@ -1,0 +1,4 @@
+# Mantém quebras de linha no padrão Linux (o sistema roda em containers Linux)
+* text=auto eol=lf
+*.png binary
+*.jpg binary

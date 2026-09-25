@@ -1,0 +1,81 @@
+erDiagram
+USUARIO ||--o| PROFESSOR : "especializa"
+USUARIO ||--o| ALUNO : "especializa"
+PROFESSOR ||--o{ DISCIPLINA : "leciona"
+PROFESSOR ||--o{ DISPONIBILIDADE : "oferece"
+DISCIPLINA ||--o{ DISPONIBILIDADE : "associada a"
+PROFESSOR ||--o{ SAQUE : "solicita"
+ALUNO ||--o{ FAVORITO : "favorita"
+PROFESSOR ||--o{ FAVORITO : "é favoritado"
+ALUNO ||--o{ CARTAO_SALVO : "guarda"
+ALUNO ||--o{ AULA : "agenda"
+PROFESSOR ||--o{ AULA : "ministra"
+DISCIPLINA ||--o{ AULA : "refere-se a"
+DISPONIBILIDADE ||--o{ AULA : "comporta"
+AULA ||--o| PAGAMENTO : "gera"
+AULA ||--o| AVALIACAO : "recebe"
+AULA ||--o{ MENSAGEM : "contém"
+USUARIO ||--o{ MENSAGEM : "envia"
+AULA ||--o{ DENUNCIA : "origina"
+MENSAGEM |o--o{ DENUNCIA : "é alvo de"
+
+USUARIO { int id PK
+  string username UK
+  string email UK
+  string first_name
+  string last_name }
+PROFESSOR { int id PK
+  int user_id FK
+  decimal preco_hora
+  decimal avaliacao_media
+  string status_verificacao
+  string status_documento }
+ALUNO { int id PK
+  int user_id FK
+  string nivel_academico
+  string objetivo }
+DISCIPLINA { int id PK
+  int professor_id FK
+  string nome }
+DISPONIBILIDADE { int id PK
+  int professor_id FK
+  int disciplina_id FK
+  string dia_semana
+  time horario_inicio
+  time horario_fim }
+AULA { int id PK
+  int aluno_id FK
+  int professor_id FK
+  int disciplina_id FK
+  int disponibilidade_id FK
+  date data
+  time horario
+  int duracao_minutos
+  string status }
+PAGAMENTO { int id PK
+  int agendamento_id FK
+  decimal valor
+  string metodo
+  string status_reembolso }
+AVALIACAO { int id PK
+  int agendamento_id FK
+  int nota }
+MENSAGEM { int id PK
+  int agendamento_id FK
+  int remetente_id FK
+  text texto }
+DENUNCIA { int id PK
+  int mensagem_id FK
+  int agendamento_id FK
+  string motivo
+  string status }
+SAQUE { int id PK
+  int professor_id FK
+  decimal valor }
+FAVORITO { int id PK
+  int aluno_id FK
+  int professor_id FK }
+CARTAO_SALVO { int id PK
+  int aluno_id FK
+  string bandeira
+  string ultimos_digitos }

@@ -1,0 +1,159 @@
+classDiagram
+direction TB
+class User {
+  +int id
+  +string username
+  +string email
+  +string firstName
+  +string lastName
+  +string password
+  +bool isSuperuser
+}
+class PerfilProfessor {
+  +string biografia
+  +Decimal precoHora
+  +File avatar
+  +Decimal avaliacaoMedia
+  +File curriculo
+  +string statusVerificacao
+  +string verificacaoDetalhe
+  +string motivoRejeicao
+  +DateTime verificadoEm
+  +string videoApresentacaoUrl
+  +File videoApresentacao
+  +string metodologiaEnsino
+  +string cpf
+  +File documentoIdentidade
+  +string statusDocumento
+  +string chavePix
+  +string telefone
+  +DateTime criadoEm
+  +enviarCurriculo(arquivo)
+  +enviarDocumento(arquivo, cpf)
+  +excluirCurriculo()
+  +excluirDocumento()
+  +excluirVideo()
+  +saldoDisponivel() Decimal
+  +recalcularAvaliacaoMedia()
+}
+class PerfilAluno {
+  +string sobre
+  +File avatar
+  +string telefone
+  +string nivelAcademico
+  +string objetivo
+  +List~string~ materiasInteresse
+  +DateTime criadoEm
+}
+class Disciplina {
+  +string nome
+  +string descricao
+}
+class Disponibilidade {
+  +string diaSemana
+  +Time horarioInicio
+  +Time horarioFim
+  +string status
+}
+class Agendamento {
+  +Date data
+  +Time horario
+  +int duracaoMinutos
+  +string conteudo
+  +string status
+  +DateTime criadoEm
+  +DateTime canceladoEm
+  +string motivoCancelamento
+  +DateTime chatLidoAlunoEm
+  +DateTime chatLidoProfessorEm
+  +horarioFim() Time
+  +mensagensNaoLidas(usuario) int
+  +marcarChatLido(usuario)
+  +horasRestantes() float
+  +aulaTerminou() bool
+  +cancelar(usuario)
+  +marcarNoShow()
+  +marcarConcluido()
+}
+class Pagamento {
+  +Decimal valor
+  +string metodo
+  +string status
+  +string codigoPix
+  +Decimal percentualReembolso
+  +Decimal valorReembolsado
+  +string statusReembolso
+  +DateTime reembolsadoEm
+  +calcularReembolso(percentual)
+}
+class Mensagem {
+  +string texto
+  +DateTime criadoEm
+}
+class Avaliacao {
+  +int nota
+  +string comentario
+  +DateTime criadoEm
+}
+class DenunciaMensagem {
+  +string textoMensagemSnapshot
+  +string motivo
+  +string detalhes
+  +string status
+  +DateTime criadoEm
+  +DateTime resolvidoEm
+}
+class Saque {
+  +Decimal valor
+  +string chavePixUsada
+  +DateTime criadoEm
+}
+class Favorito {
+  +DateTime criadoEm
+}
+class CartaoSalvo {
+  +string apelido
+  +string bandeira
+  +string ultimosDigitos
+  +string validade
+  +DateTime criadoEm
+}
+class VerificadorBase {
+  <<abstract>>
+  +analisar(professor, arquivo) ResultadoVerificacao
+}
+class VerificadorHeuristico {
+  +analisar(professor, arquivo) ResultadoVerificacao
+}
+class ModeradorBase {
+  <<abstract>>
+  +analisar(texto) ResultadoModeracao
+}
+class ModeradorPalavrasChave {
+  +analisar(texto) ResultadoModeracao
+}
+
+User "1" --> "0..1" PerfilProfessor : possui
+User "1" --> "0..1" PerfilAluno : possui
+PerfilProfessor "1" --> "*" Disciplina : leciona
+PerfilProfessor "1" --> "*" Disponibilidade : oferece
+Disciplina "1" --> "*" Disponibilidade : associada a
+PerfilProfessor "1" --> "*" Saque : solicita
+PerfilAluno "1" --> "*" Favorito : salva
+Favorito "*" --> "1" PerfilProfessor : referencia
+PerfilAluno "1" --> "*" CartaoSalvo : guarda
+PerfilAluno "1" --> "*" Agendamento : agenda
+PerfilProfessor "1" --> "*" Agendamento : ministra
+Disciplina "1" --> "*" Agendamento : referente a
+Disponibilidade "1" --> "*" Agendamento : comporta
+Agendamento "1" --> "0..1" Pagamento : gera
+Agendamento "1" --> "0..1" Avaliacao : recebe
+Agendamento "1" --> "*" Mensagem : contem
+User "1" --> "*" Mensagem : envia
+Agendamento "1" --> "*" DenunciaMensagem : origina
+Mensagem "0..1" --> "*" DenunciaMensagem : alvo de
+PerfilProfessor ..> VerificadorBase : usa
+VerificadorBase <|-- VerificadorHeuristico
+Agendamento ..> ModeradorBase : usa
+Avaliacao ..> ModeradorBase : usa
+ModeradorBase <|-- ModeradorPalavrasChave

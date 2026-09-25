@@ -1,0 +1,170 @@
+erDiagram
+  contas_perfilaluno ||--o{ agendamento_agendamento : "aluno_id"
+  professores_disciplina ||--o{ agendamento_agendamento : "disciplina_id"
+  professores_disponibilidade ||--o{ agendamento_agendamento : "disponibilidade_id"
+  contas_perfilprofessor ||--o{ agendamento_agendamento : "professor_id"
+  auth_user |o--o{ agendamento_agendamento : "cancelado_por_id"
+  agendamento_agendamento ||--o| agendamento_avaliacao : "agendamento_id"
+  contas_perfilaluno ||--o{ agendamento_avaliacao : "aluno_id"
+  contas_perfilprofessor ||--o{ agendamento_avaliacao : "professor_id"
+  agendamento_agendamento ||--o{ agendamento_denunciamensagem : "agendamento_id"
+  auth_user |o--o{ agendamento_denunciamensagem : "denunciado_id"
+  auth_user |o--o{ agendamento_denunciamensagem : "denunciante_id"
+  agendamento_mensagem |o--o{ agendamento_denunciamensagem : "mensagem_id"
+  auth_user |o--o{ agendamento_denunciamensagem : "resolvido_por_id"
+  agendamento_agendamento ||--o{ agendamento_mensagem : "agendamento_id"
+  auth_user ||--o{ agendamento_mensagem : "remetente_id"
+  agendamento_agendamento ||--o| agendamento_pagamento : "agendamento_id"
+  contas_perfilaluno ||--o{ contas_cartaosalvo : "aluno_id"
+  contas_perfilaluno ||--o{ contas_favorito : "aluno_id"
+  contas_perfilprofessor ||--o{ contas_favorito : "professor_id"
+  auth_user ||--o| contas_perfilaluno : "user_id"
+  auth_user ||--o| contas_perfilprofessor : "user_id"
+  contas_perfilprofessor ||--o{ contas_saque : "professor_id"
+  contas_perfilprofessor ||--o{ professores_disciplina : "professor_id"
+  professores_disciplina ||--o{ professores_disponibilidade : "disciplina_id"
+  contas_perfilprofessor ||--o{ professores_disponibilidade : "professor_id"
+  agendamento_agendamento {
+    BIGINT id PK
+    DATE data
+    TIME(6) horario
+    VARCHAR(255) conteudo
+    VARCHAR(20) status
+    DATETIME(6) criado_em
+    BIGINT aluno_id FK
+    BIGINT disciplina_id FK
+    BIGINT disponibilidade_id FK
+    BIGINT professor_id FK
+    DATETIME(6) cancelado_em  "NULL"
+    INT cancelado_por_id FK "NULL"
+    VARCHAR(30) motivo_cancelamento
+    SMALLINT_UNSIGNED duracao_minutos
+    DATETIME(6) chat_lido_aluno_em  "NULL"
+    DATETIME(6) chat_lido_professor_em  "NULL"
+  }
+  agendamento_avaliacao {
+    BIGINT id PK
+    SMALLINT_UNSIGNED nota
+    LONGTEXT comentario
+    DATETIME(6) criado_em
+    BIGINT agendamento_id FK
+    BIGINT aluno_id FK
+    BIGINT professor_id FK
+  }
+  agendamento_denunciamensagem {
+    BIGINT id PK
+    LONGTEXT texto_mensagem_snapshot
+    VARCHAR(30) motivo
+    LONGTEXT detalhes
+    VARCHAR(20) status
+    DATETIME(6) criado_em
+    DATETIME(6) resolvido_em  "NULL"
+    BIGINT agendamento_id FK
+    INT denunciado_id FK "NULL"
+    INT denunciante_id FK "NULL"
+    BIGINT mensagem_id FK "NULL"
+    INT resolvido_por_id FK "NULL"
+  }
+  agendamento_mensagem {
+    BIGINT id PK
+    LONGTEXT texto
+    DATETIME(6) criado_em
+    BIGINT agendamento_id FK
+    INT remetente_id FK
+  }
+  agendamento_pagamento {
+    BIGINT id PK
+    DECIMAL(8,2) valor
+    VARCHAR(20) metodo
+    VARCHAR(20) status
+    VARCHAR(255) codigo_pix
+    DATETIME(6) criado_em
+    BIGINT agendamento_id FK
+    DECIMAL(5,2) percentual_reembolso  "NULL"
+    DATETIME(6) reembolsado_em  "NULL"
+    VARCHAR(20) status_reembolso
+    DECIMAL(8,2) valor_reembolsado  "NULL"
+  }
+  auth_user {
+    INT id PK
+    VARCHAR(128) password
+    DATETIME(6) last_login  "NULL"
+    TINYINT(1) is_superuser
+    VARCHAR(150) username UK
+    VARCHAR(150) first_name
+    VARCHAR(150) last_name
+    VARCHAR(254) email
+    TINYINT(1) is_staff
+    TINYINT(1) is_active
+    DATETIME(6) date_joined
+  }
+  contas_cartaosalvo {
+    BIGINT id PK
+    VARCHAR(50) apelido
+    VARCHAR(20) bandeira
+    VARCHAR(4) ultimos_digitos
+    VARCHAR(7) validade
+    DATETIME(6) criado_em
+    BIGINT aluno_id FK
+  }
+  contas_favorito {
+    BIGINT id PK
+    DATETIME(6) criado_em
+    BIGINT aluno_id FK
+    BIGINT professor_id FK
+  }
+  contas_perfilaluno {
+    BIGINT id PK
+    DATETIME(6) criado_em
+    INT user_id FK
+    VARCHAR(100) avatar  "NULL"
+    LONGTEXT sobre
+    JSON materias_interesse
+    VARCHAR(20) nivel_academico
+    VARCHAR(30) objetivo
+    VARCHAR(20) telefone
+  }
+  contas_perfilprofessor {
+    BIGINT id PK
+    LONGTEXT biografia
+    DECIMAL(8,2) preco_hora
+    VARCHAR(100) avatar  "NULL"
+    DECIMAL(3,2) avaliacao_media
+    DATETIME(6) criado_em
+    INT user_id FK
+    VARCHAR(100) curriculo  "NULL"
+    LONGTEXT motivo_rejeicao
+    VARCHAR(20) status_verificacao
+    LONGTEXT verificacao_detalhe
+    DATETIME(6) verificado_em  "NULL"
+    VARCHAR(150) chave_pix
+    VARCHAR(14) cpf
+    VARCHAR(100) documento_identidade  "NULL"
+    LONGTEXT metodologia_ensino
+    VARCHAR(20) status_documento
+    VARCHAR(100) video_apresentacao  "NULL"
+    VARCHAR(200) video_apresentacao_url
+    VARCHAR(20) telefone
+  }
+  contas_saque {
+    BIGINT id PK
+    DECIMAL(8,2) valor
+    VARCHAR(150) chave_pix_usada
+    DATETIME(6) criado_em
+    BIGINT professor_id FK
+  }
+  professores_disciplina {
+    BIGINT id PK
+    VARCHAR(100) nome
+    LONGTEXT descricao
+    BIGINT professor_id FK
+  }
+  professores_disponibilidade {
+    BIGINT id PK
+    VARCHAR(20) dia_semana
+    TIME(6) horario_inicio
+    TIME(6) horario_fim
+    VARCHAR(20) status
+    BIGINT disciplina_id FK
+    BIGINT professor_id FK
+  }

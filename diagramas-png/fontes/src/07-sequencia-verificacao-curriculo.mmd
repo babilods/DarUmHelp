@@ -1,0 +1,39 @@
+sequenceDiagram
+autonumber
+actor P as Professor
+participant F as Frontend
+participant API as API Django REST
+participant V as VerificadorHeuristico
+participant DB as Banco de Dados
+actor ADM as Administrador
+participant ADMIN as Painel Django Admin
+P->>F: Envia currículo (PDF, até 5 MB)
+F->>API: POST /api/professores/me/curriculo/ (multipart)
+API->>API: Valida extensão .pdf e tamanho
+API->>V: analisar(professor, arquivo)
+V->>V: Extrai texto com pypdf e procura formação,<br/>experiência e as disciplinas cadastradas
+V-->>API: ResultadoVerificacao (confiança, alertas, resumo)
+API->>DB: UPDATE PerfilProfessor (curriculo, status_verificacao=pendente,<br/>verificacao_detalhe, verificado_em=NULL)
+API-->>F: 201 Created
+F-->>P: "Currículo enviado, aguardando revisão"
+Note over P,DB: Enquanto estiver pendente, o professor não aparece nas buscas públicas.
+opt enviou o arquivo errado
+  P->>F: Clica em "Excluir" (ou envia outro PDF)
+  F->>API: DELETE /api/professores/me/curriculo/
+  API->>DB: UPDATE PerfilProfessor (curriculo=NULL, status_verificacao=pendente)
+  API->>API: Apaga o arquivo PDF do servidor
+  API-->>F: 200 OK (perfil atualizado)
+  F-->>P: Selo "Não enviado"
+end
+ADM->>ADMIN: Filtra professores com status pendente
+ADMIN->>DB: SELECT ... WHERE status_verificacao = 'pendente'
+DB-->>ADMIN: lista + alertas da triagem automática
+ADMIN-->>ADM: Exibe alertas e o link do PDF
+alt currículo adequado
+  ADM->>ADMIN: Ação "Aprovar"
+  ADMIN->>DB: UPDATE status_verificacao=aprovado, verificado_em=agora
+else currículo inadequado
+  ADM->>ADMIN: Ação "Rejeitar" (motivo)
+  ADMIN->>DB: UPDATE status_verificacao=rejeitado, motivo_rejeicao
+end
+ADMIN-->>ADM: Confirmação

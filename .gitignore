@@ -1,0 +1,22 @@
+# Python / Django
+**/venv/
+**/__pycache__/
+*.pyc
+**/staticfiles/
+**/db.sqlite3
+.coverage
+
+# Segredos e configurações locais (use DarUmHelp-api/.env.example como modelo)
+**/.env
+.claude/
+
+# Arquivos enviados pelos usuários (fotos, currículos, RG/CNH): dados pessoais — nunca versionar
+DarUmHelp-api/media/
+
+# Documento do projeto (entregue à parte) e arquivos temporários do Office
+*.docx
+~$*
+
+# Diversos
+.dist/
+**/node_modules/

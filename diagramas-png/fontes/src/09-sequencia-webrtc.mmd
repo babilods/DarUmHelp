@@ -1,0 +1,37 @@
+sequenceDiagram
+autonumber
+actor P as Professor
+actor A as Aluno
+participant WP as SinalizacaoConsumer (professor)
+participant WA as SinalizacaoConsumer (aluno)
+participant S as Sala em memória
+P->>WP: Conecta em ws/sala/{agendamento_id}/
+WP->>WP: _autorizar(): papel = professor
+WP->>S: sala["professor"] = channel
+A->>WA: Conecta em ws/sala/{agendamento_id}/
+WA->>WA: _autorizar(): papel = aluno
+alt papel já conectado ou sala cheia
+  WA-->>A: close(4409 / 4408)
+else entrada permitida
+  WA->>S: sala["aluno"] = channel
+  WA->>WP: peer.joined(role=aluno)
+  WA-->>A: peer_joined(role=professor)
+end
+P->>WP: offer (SDP)
+WP->>WA: signal.relay(offer)
+WA-->>A: offer
+A->>WA: answer (SDP)
+WA->>WP: signal.relay(answer)
+WP-->>P: answer
+loop troca de ICE candidates
+  P->>WP: ice-candidate
+  WP->>WA: signal.relay
+  WA-->>A: ice-candidate
+  A->>WA: ice-candidate
+  WA->>WP: signal.relay
+  WP-->>P: ice-candidate
+end
+Note over P,A: Conexão P2P WebRTC estabelecida — áudio e vídeo trafegam direto entre os navegadores
+A->>WA: Sai da sala (disconnect)
+WA->>S: remove sala["aluno"]
+WA->>WP: peer.left(role=aluno)

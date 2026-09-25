@@ -1,0 +1,53 @@
+sequenceDiagram
+autonumber
+actor U as Aluno ou Professor
+participant F as Frontend
+participant WS as ChatConsumer (WebSocket)
+participant API as API Django REST
+participant M as ModeradorPalavrasChave
+participant DB as Banco de Dados
+participant CL as Channel Layer
+actor O as Outro participante
+U->>F: Abre o chat da aula
+F->>API: GET /api/aulas/{id}/mensagens/
+API->>DB: SELECT mensagens (com nome e foto de quem enviou)
+API->>DB: UPDATE Agendamento SET chat_lido_[papel]_em = agora
+API-->>F: histórico (texto tratado contra código malicioso)
+F->>WS: Conecta em ws/chat/{agendamento_id}/
+WS->>WS: Usuário participa da aula?
+alt não participa
+  WS-->>F: close(4403)
+else participa
+  WS->>CL: group_add("chat_{id}")
+end
+U->>F: Digita e envia mensagem
+F->>API: POST /api/aulas/{id}/mensagens/ (texto)
+alt aula concluída, cancelada ou com horário encerrado
+  API-->>F: 400 (conversa apenas para leitura)
+else aula ativa
+API->>M: analisar(texto)
+alt conteúdo reprovado
+  M-->>API: aprovado = false
+  API-->>F: 400 Bad Request (mensagem bloqueada)
+  F-->>U: Exibe aviso de moderação
+else conteúdo aprovado
+  M-->>API: aprovado = true
+  API->>DB: INSERT Mensagem
+  DB-->>API: sinal post_save
+  API->>CL: group_send("chat_{id}", chat.message)
+  CL-->>WS: chat.message (para cada conexão do grupo)
+  WS-->>F: mensagem
+  API-->>F: 201 Created
+  alt outro participante com o chat aberto
+    WS-->>O: mensagem em tempo real (com foto)
+    O->>API: POST /api/aulas/{id}/mensagens/lidas/
+  else outro participante com o chat fechado
+    loop a cada 15 segundos
+      O->>API: GET /api/aulas/nao-lidas/
+      API->>DB: COUNT mensagens do outro depois de chat_lido_[papel]_em
+      API-->>O: total e quantidade por aula
+    end
+    Note over O: Bolinha vermelha com o número na aba e no botão "Abrir Chat"
+  end
+end
+end

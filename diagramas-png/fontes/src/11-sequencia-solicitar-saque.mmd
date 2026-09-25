@@ -1,0 +1,24 @@
+sequenceDiagram
+autonumber
+actor P as Professor
+participant F as Frontend
+participant API as API Django REST
+participant DB as Banco de Dados
+P->>F: Abre a carteira
+F->>API: GET /api/professores/me/carteira/
+API->>DB: SUM(pagamentos de aulas concluídas) − SUM(saques)
+DB-->>API: total ganho, total sacado
+API-->>F: saldo disponível + extrato
+P->>F: Informa valor do saque
+F->>API: POST /api/professores/me/saques/ (valor)
+API->>API: valor > 0?
+API->>DB: chave_pix cadastrada? saldo_disponivel()
+alt sem chave PIX
+  API-->>F: 400 "Cadastre uma chave PIX antes de solicitar um saque"
+else valor maior que o saldo
+  API-->>F: 400 "O valor do saque não pode ser maior que o saldo disponível"
+else válido
+  API->>DB: INSERT Saque (valor, chave_pix_usada)
+  API-->>F: 201 Created
+  F-->>P: Saque realizado (simulado, instantâneo)
+end

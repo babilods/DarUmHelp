@@ -1,0 +1,35 @@
+sequenceDiagram
+autonumber
+actor A as Aluno
+participant F as Frontend
+participant API as API Django REST
+participant DB as Banco de Dados
+A->>F: Escolhe professor, data (a partir de hoje), janela, horário de início,<br/>duração (30 a 150 min) e método (PIX/cartão/boleto)
+F->>API: GET /api/disponibilidades/{id}/ocupados/?data=
+API->>DB: SELECT aulas ativas do professor nessa data (todas as disciplinas)
+DB-->>API: horários já ocupados
+API-->>F: lista de ocupados (pré-visualização)
+F->>F: Calcula preço = preco_hora × duração/60
+A->>F: Confirma pagamento
+F->>API: POST /api/aulas/ (disponibilidade, data, horario,<br/>duracao_minutos, metodo)
+API->>API: validate(): usuário é aluno? dia da semana da data =<br/>dia da janela? horário + duração cabem na janela?<br/>começa com pelo menos 1h de antecedência?<br/>janela disponível? professor aprovado?
+alt alguma regra falha
+  API-->>F: 400 Bad Request (mensagem da regra)
+  F-->>A: Exibe aviso
+else dados válidos
+  API->>DB: BEGIN · SELECT PerfilProfessor FOR UPDATE (trava a agenda do professor)
+  API->>DB: SELECT aulas pendentes/confirmadas do professor nessa data
+  DB-->>API: aulas existentes
+  API->>API: Verifica sobreposição com qualquer aula do professor (cada uma com sua duração)
+  alt horário sobrepõe outra aula
+    API->>DB: ROLLBACK
+    API-->>F: 400 "Esse horário já está ocupado na agenda do professor"
+    F-->>A: Pede outro horário
+  else horário livre
+    API->>DB: INSERT Agendamento (status=confirmado, duracao_minutos)
+    API->>DB: INSERT Pagamento (valor proporcional, metodo, status=aprovado)
+    API->>DB: COMMIT
+    API-->>F: 201 Created (aula com horário início–fim e preço)
+    F-->>A: Tela de confirmação do método escolhido
+  end
+end

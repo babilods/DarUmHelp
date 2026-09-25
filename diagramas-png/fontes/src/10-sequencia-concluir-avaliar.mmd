@@ -1,0 +1,42 @@
+sequenceDiagram
+autonumber
+actor P as Professor
+actor A as Aluno
+participant F as Frontend
+participant API as API Django REST
+participant M as ModeradorPalavrasChave
+participant DB as Banco de Dados
+P->>F: Clica em "Concluir aula" (após o horário)
+F->>API: POST /api/aulas/{id}/concluir/
+API->>DB: BEGIN · SELECT Agendamento FOR UPDATE
+alt não é o professor da aula
+  API-->>F: 403 Forbidden
+else aula cancelada/concluída ou horário ainda não passou
+  API-->>F: 400 Bad Request
+else pode concluir
+  API->>DB: UPDATE Agendamento SET status=concluido · COMMIT
+  API-->>F: 200 OK "Aula marcada como concluída"
+  Note over API,DB: O valor da aula passa a contar no saldo da carteira do professor.
+end
+A->>F: Abre "Minhas aulas" e clica em "Avaliar professor"
+A->>F: Escolhe nota (1 a 5) e escreve comentário
+F->>API: POST /api/aulas/{id}/avaliacao/ (nota, comentario)
+API->>API: É o aluno da aula? aula concluída? ainda não avaliada?
+alt alguma regra falha
+  API-->>F: 400 Bad Request (mensagem da regra)
+else regras ok
+  API->>M: analisar(comentario)
+  alt comentário reprovado
+    M-->>API: aprovado = false
+    API-->>F: 400 "Esse comentário não pode ser publicado..."
+    F-->>A: Exibe aviso de moderação
+  else comentário aprovado
+    M-->>API: aprovado = true
+    API->>DB: INSERT Avaliacao (nota, comentario)
+    DB-->>API: sinal post_save
+    API->>DB: SELECT AVG(nota) das avaliações do professor
+    API->>DB: UPDATE PerfilProfessor SET avaliacao_media
+    API-->>F: 201 Created
+    F-->>A: "Avaliação enviada"
+  end
+end
