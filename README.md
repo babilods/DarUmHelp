@@ -28,10 +28,11 @@ diagramas-png/     diagramas UML e de banco de dados (fontes em diagramas-png/fo
 
 ## Como executar
 
-Pré-requisito: Docker com Docker Compose.
+Pré-requisito: Git e Docker com Docker Compose.
 
 ```bash
-cd DarUmHelp-api
+git clone https://github.com/babilods/DarUmHelp.git
+cd DarUmHelp/DarUmHelp-api
 cp .env.example .env          # ajuste as senhas se quiser
 docker compose up -d --build  # sobe o MySQL e a aplicação (as migrations rodam sozinhas)
 docker compose exec api python manage.py createsuperuser   # usuário do painel /admin/
