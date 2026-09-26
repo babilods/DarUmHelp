@@ -52,9 +52,11 @@ def logout_view(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def me(request):
+    # Visitante não é erro: responde 200 com autenticado=false (um 401 aqui aparecia
+    # como erro vermelho no console do navegador em toda visita à página inicial).
     if not request.user.is_authenticated:
-        return Response({"detail": "Não autenticado."}, status=status.HTTP_401_UNAUTHORIZED)
-    return Response(usuario_para_payload(request.user))
+        return Response({"autenticado": False})
+    return Response({"autenticado": True, **usuario_para_payload(request.user)})
 
 
 @api_view(["POST"])

@@ -1560,7 +1560,7 @@ Tem certeza que deseja cancelar esta aula?`;
                             Agendar com ${teacher.name}
                             ${teacher.identidadeVerificada ? `<i data-lucide="badge-check" class="w-4 h-4 text-emerald-500" title="Identidade verificada"></i>` : ''}
                         </h3>
-                        <p class="text-xs text-indigo-600 font-semibold">${teacher.subject} • R$ ${teacher.price.toFixed(2).replace('.', ',')} por aula</p>
+                        <p class="text-xs text-indigo-600 font-semibold">${teacher.subject} • R$ ${teacher.price.toFixed(2).replace('.', ',')} por hora</p>
                         ${teacher.curriculoUrl ? `
                             <a href="${teacher.curriculoUrl}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 underline mt-1">
                                 <i data-lucide="file-text" class="w-3 h-3"></i> Ver currículo (formação e experiência)
@@ -1571,7 +1571,7 @@ Tem certeza que deseja cancelar esta aula?`;
 
                 ${teacher.videoUrl ? `
                     <div class="aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
-                        <iframe src="${embedUrlVideo(teacher.videoUrl)}" class="w-full h-full" allowfullscreen></iframe>
+                        <iframe src="${embedUrlVideo(teacher.videoUrl)}" class="w-full h-full" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" allow="encrypted-media; picture-in-picture"></iframe>
                     </div>
                 ` : ''}
 
@@ -3247,7 +3247,7 @@ Tem certeza que deseja cancelar esta aula?`;
 
                 ${temLink ? `
                     <div class="aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
-                        <iframe src="${embedUrlVideo(p.video_apresentacao_url)}" class="w-full h-full" allowfullscreen></iframe>
+                        <iframe src="${embedUrlVideo(p.video_apresentacao_url)}" class="w-full h-full" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" allow="encrypted-media; picture-in-picture"></iframe>
                     </div>
                 ` : temArquivo ? `
                     <video src="${p.videoApresentacaoArquivoUrl}" controls class="w-full rounded-xl border border-slate-200"></video>
@@ -4055,8 +4055,10 @@ Tem certeza que deseja cancelar esta aula?`;
 
         try {
             const resp = await apiFetch('/api/contas/me/');
-            if (resp.ok) {
-                currentUser = await resp.json();
+            const dados = resp.ok ? await resp.json() : null;
+            if (dados && dados.autenticado) {
+                delete dados.autenticado;
+                currentUser = dados;
                 localStorage.setItem("darumhelp_user", JSON.stringify(currentUser));
             } else {
                 currentUser = null;
@@ -4067,7 +4069,7 @@ Tem certeza que deseja cancelar esta aula?`;
         }
 
         updateMenuPermissions();
-        await carregarAulas();
+        if (currentUser) await carregarAulas();  // visitante não tem aulas (evita 403 no console)
         await carregarMeuPerfilProfessor();
         await carregarMeuPerfilAluno();
     }

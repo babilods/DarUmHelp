@@ -78,7 +78,9 @@ class RegistroLoginTests(TestCase):
             "/api/contas/login/", {"email": "ana@teste.com", "senha": "errada"}, format="json"
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(self.client.get("/api/contas/me/").status_code, 401)
+        me = self.client.get("/api/contas/me/")
+        self.assertEqual(me.status_code, 200)
+        self.assertFalse(me.data["autenticado"])
 
 
 class AlterarEmailTests(TestCase):
