@@ -24,6 +24,7 @@ DarUmHelp-api/     back-end Django
   realtime/        consumers WebSocket (chat e sinalização da videochamada)
 DarUmHelp-web/     front-end (index.html e script.js)
 diagramas-png/     diagramas UML e de banco de dados (fontes em diagramas-png/fontes)
+banco-de-dados/    estrutura do banco MySQL (tabelas e relacionamentos) em darumhelp.sql
 ```
 
 ## Como executar
@@ -40,6 +41,12 @@ docker compose exec api python manage.py seed_dados        # (opcional) dados de
 ```
 
 Acesse **http://localhost:8000** (site) e **http://localhost:8000/admin/** (painel administrativo).
+
+## Banco de dados
+
+O arquivo [`banco-de-dados/darumhelp.sql`](banco-de-dados/darumhelp.sql) traz a **estrutura** do banco MySQL, gerada com `mysqldump --no-data`: as 22 tabelas, com colunas, tipos, chaves primárias, chaves estrangeiras (relacionamentos) e índices. Não contém dados de usuários.
+
+Essa mesma estrutura é criada automaticamente pelas migrations do Django ao subir o projeto com Docker. O arquivo serve para consultar o modelo do banco ou recriá-lo direto no MySQL (por exemplo, pelo MySQL Workbench, em *Server → Data Import*).
 
 ## Testes
 
